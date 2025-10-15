@@ -1,6 +1,14 @@
 {
   "baseDate": "2025-10-15",
-  "vooBaseClose": null,
-  "qqqBaseClose": null,
-  "series": []
+  "vooBaseClose": 611.3351,
+  "qqqBaseClose": 602.4456,
+  "series": [
+    {
+      "date": "2025-10-15",
+      "vooClose": 611.3351,
+      "qqqClose": 602.4456,
+      "vooN": 1,
+      "qqqN": 1
+    }
+  ]
 }
