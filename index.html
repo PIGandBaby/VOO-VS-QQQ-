@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VOO/QQQ 종가 기록 (2025-10-15=1.0)</title>
+  <meta name="description" content="매일 자동으로 갱신되는 VOO/QQQ 정규장 종가의 정규화 차트 (GitHub Actions)" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root{--bg:#0b0c10;--panel:#111317;--text:#e8ebf1;--muted:#b8c1d4;--accent:#6aa7ff;--accent2:#7ef0c1;--radius:16px}
+    *{box-sizing:border-box} html,body{margin:0;padding:0;height:100%}
+    body{font-family:"Pretendard",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;background:#0b0c10;color:var(--text)}
+    .container{width:min(1100px,92%);margin:0 auto;padding:28px 0}
+    .card{background:linear-gradient(180deg,rgba(26,31,46,.9),rgba(17,19,23,.9));border:1px solid #22283a;border-radius:var(--radius)}
+    .pad{padding:18px}
+    .muted{color:var(--muted)} .row{display:grid;grid-template-columns:1fr;gap:14px}
+    .kpi{display:flex;gap:10px;flex-wrap:wrap}
+    .kpi span{background:#161c2a;border:1px solid #27324c;border-radius:999px;padding:6px 10px;font-size:13px;color:#bcd1ff}
+    a{color:var(--accent)}
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1 style="margin:0 0 6px">VOO/QQQ 종가 기록 (정규화: 2025‑10‑15 = 1.0)</h1>
+    <p class="muted">이 페이지는 <b>정적</b>이며, 매일 GitHub Actions가 <code>data/series.json</code>을 업데이트합니다. 일부 시차/휴장일에 따라 반영이 0~24시간 가량 지연될 수 있습니다(<b>추측</b>).</p>
+
+    <div class="card" style="margin:14px 0">
+      <div class="pad">
+        <div style="height:340px"><canvas id="chart"></canvas></div>
+        <div class="kpi" id="kpi"></div>
+        <p class="muted" id="asof" style="margin:8px 0 0">-</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="pad">
+        <h3 style="margin:4px 0 8px">설명 & 출처</h3>
+        <ul>
+          <li>정규장 시간(대체로 09:30~16:00 ET) 및 마감은 거래소 안내 참고.</li>
+          <li>데이터 소스는 무료 공개 CSV(예: Stooq). 필요 시 상용 API로 교체 가능.</li>
+          <li>모든 값은 교육/연습용. 투자 판단 자료로 사용하지 마세요.</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    async function main(){
+      const res = await fetch('data/series.json?ts='+Date.now());
+      const j = await res.json();
+      const labels = j.series.map(r=>r.date);
+      const voo = j.series.map(r=>r.vooN);
+      const qqq = j.series.map(r=>r.qqqN);
+
+      const ctx = document.getElementById('chart');
+      new Chart(ctx, {
+        type:'line',
+        data:{ labels, datasets:[
+          { label:'VOO (정규화)', data:voo, tension:.25 },
+          { label:'QQQ (정규화)', data:qqq, tension:.25 }
+        ]},
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{position:'bottom'} }, scales:{ y:{ ticks:{ callback:(v)=>Number(v).toFixed(2) } } } }
+      });
+
+      const kpi = document.getElementById('kpi');
+      if (j.series.length) {
+        const last = j.series[j.series.length-1];
+        kpi.innerHTML = `
+          <span>기준일: ${j.baseDate}</span>
+          <span>VOO 기준가: ${j.vooBaseClose ?? '-' } (USD)</span>
+          <span>QQQ 기준가: ${j.qqqBaseClose ?? '-' } (USD)</span>
+          <span>최근일: ${last.date}</span>
+          <span>VOO: ${last.vooN.toFixed(4)}</span>
+          <span>QQQ: ${last.qqqN.toFixed(4)}</span>
+        `;
+        document.getElementById('asof').textContent = `* as of ${last.date}, base = ${j.baseDate}`;
+      }
+    }
+    main();
+  </script>
+</body>
+</html>
